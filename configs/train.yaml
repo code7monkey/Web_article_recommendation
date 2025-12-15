@@ -1,0 +1,20 @@
+seed: 42
+
+data:
+  view_log_path: data/view_log.csv
+  article_info_path: data/article_info.csv
+  sample_submission_path: data/sample_submission.csv
+  text_column: Content
+
+model:
+  weight_collaborative: 1.0
+  weight_content: 1.0
+
+training:
+  top_k: 5
+  generate_submission: true
+
+assets:
+  combined_scores_path: assets/combined_scores.npy
+  user_data_path: assets/user_data.pkl
+  output_submission_path: data/final_submission.csv
