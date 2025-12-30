@@ -1,103 +1,113 @@
-# 웹 기사 추천 경진대회 샘플 프로젝트
+# Web News Recommendation Challenge – Sample Project
 
+This repository provides a **sample hybrid recommendation pipeline** for a web news recommendation challenge.  
+It combines **content-based recommendation using TF-IDF embeddings** with **collaborative filtering based on user view logs** to compute final recommendation scores.
 
----
-
-**기사 내용의 TF‑IDF 임베딩을 활용한 콘텐츠 기반 추천**을 결합하는 방식으로 추천 점수를 계산합니다.  
-학습 코드와 추론 코드를 분리하고, **YAML 설정 파일**을 통해 실험을 제어할 수 있도록 구성되어 있습니다.
+Training and inference are separated into different scripts, and all experiments are controlled through **YAML configuration files**, allowing easy tuning without modifying source code.
 
 ---
 
 ## 🎯 Project Goals
 
-* **사용자 조회 기록 기반 협업 필터링** – 사용자들의 기사 조회 행태를 행렬로 표현하고, 코사인 유사도를 통해 비슷한 사용자를 찾습니다.
-* **기사 내용 기반 콘텐츠 추천** – 기사의 `Content` 컬럼을 TF‑IDF로 임베딩하여 기사 간 유사도를 계산합니다.
-* **Hybrid 추천 점수** – 협업 필터링 점수와 콘텐츠 기반 점수를 결합하여 최종 추천 점수를 만듭니다.
-* **Scaffold 기반 K‑Fold가 아닌 사용자별 추천** – 사용자가 작성한 기사와 반복적으로 읽은 기사를 적절히 추천 목록에 포함합니다.
-* **YAML 기반 설정 관리** – 학습 스크립트(`train.py`)와 추론 스크립트(`inference.py`)에서 공통 설정을 `configs/*.yaml` 파일로 분리하여 코드 수정 없이 실험을 조정할 수 있습니다.
+- **Collaborative filtering based on user viewing history**  
+  Represent user–article interactions as a matrix and identify similar users using cosine similarity.
+
+- **Content-based recommendation using article text**  
+  Embed article contents (the `Content` column) with TF-IDF and compute article-to-article similarity.
+
+- **Hybrid recommendation scoring**  
+  Combine collaborative filtering scores and content-based similarity scores into a final recommendation score.
+
+- **User-centric recommendation logic**  
+  Recommend articles written by the user or frequently read articles when appropriate, instead of using scaffold-based K-Fold logic.
+
+- **YAML-based configuration management**  
+  Control training and inference behavior through `configs/*.yaml` files without changing code.
 
 ---
 
 ## 📁 Project Structure
 
-```
-newsrec_project2/
-├── src/                    # 핵심 로직 (import용)
-│   ├── __init__.py
-│   ├── dataset.py          # 데이터 로딩 및 전처리 함수
-│   ├── model.py            # 협업 필터링 및 콘텐츠 기반 점수 계산
-│   ├── trainer.py          # 추천 점수 결합 및 추천 목록 생성
-│   ├── losses.py           # (확장용) 커스텀 손실 함수 자리
-│   └── utils.py            # 공용 함수 (seed 고정 등)
-│
-├── train.py                # 학습 실행 스크립트 (YAML 설정 읽기)
-├── inference.py            # 추론 / 제출 파일 생성 스크립트
-│
-├── configs/                # 설정 파일 (코드 수정 없이 실험 제어)
-│   ├── train.yaml          # 데이터 경로, 가중치 등 학습 설정
-│   └── submit.yaml         # 추론 및 제출 설정
-│
-├── assets/                 # 중간 산출물 (예: 훈련된 모델, 전처리 정보)
-│   ├── combined_scores.npy  # Hybrid 추천 점수 행렬 (train.py에서 생성)
-│   └── user_data.pkl       # 사용자별 작성 기사/조회 정보 (추론용)
-│
-├── data/                   # 입력 데이터 (샘플 포함)
-│   ├── view_log.csv        # 사용자의 기사 조회 로그
-│   ├── article_info.csv    # 기사 내용 (Content 컬럼 포함)
-│   └── sample_submission.csv # 제출 포맷 예시
-│
-├── requirements.txt        # 실행 환경 고정
-├── .gitignore              # Git이 무시할 파일 패턴
-├── .gitattributes          # Git 설정 (예: LFS)
-└── README.md
-```
+    newsrec_project2/
+    ├── src/                    # Core logic (importable modules)
+    │   ├── __init__.py
+    │   ├── dataset.py          # Data loading and preprocessing
+    │   ├── model.py            # Collaborative & content-based scoring
+    │   ├── trainer.py          # Score combination and recommendation logic
+    │   ├── losses.py           # (Optional) placeholder for custom losses
+    │   └── utils.py            # Common utilities (e.g., seed fixing)
+    │
+    ├── train.py                # Training script (reads YAML config)
+    ├── inference.py            # Inference & submission generation script
+    │
+    ├── configs/                # Configuration files
+    │   ├── train.yaml          # Training settings (paths, weights, etc.)
+    │   └── submit.yaml         # Inference & submission settings
+    │
+    ├── assets/                 # Intermediate artifacts
+    │   ├── combined_scores.npy # Hybrid recommendation score matrix
+    │   └── user_data.pkl       # User-specific metadata for inference
+    │
+    ├── data/                   # Input data (sample included)
+    │   ├── view_log.csv        # User article view logs
+    │   ├── article_info.csv    # Article metadata (includes Content column)
+    │   └── sample_submission.csv # Example submission format
+    │
+    ├── requirements.txt        # Fixed execution environment
+    ├── .gitignore              # Git ignore patterns
+    ├── .gitattributes          # Git settings (e.g., LFS)
+    └── README.md
 
 ---
 
 ## 🛠 Environment Setup
 
-Python 3.9 이상에서 동작하도록 작성되었습니다. 프로젝트 루트에서 다음 명령으로 의존성을 설치합니다.
+The project is designed to run on **Python 3.9 or later**.  
+Install dependencies from the project root:
 
-```bash
-pip install -r requirements.txt
-```
+    pip install -r requirements.txt
 
-GPU가 필요한 딥러닝 모델이 없으므로 CPU 환경에서도 실행 가능합니다.
+No deep learning models are used, so the pipeline can be executed entirely on **CPU environments**.
 
 ---
 
 ## 🚀 Usage
 
-학습과 추론은 분리된 스크립트로 제공됩니다. 각각의 스크립트는 `configs/` 아래 YAML 설정 파일을 읽어 동작하므로, 하이퍼파라미터나 데이터 경로를 수정할 때 스크립트를 건드릴 필요가 없습니다.
+Training and inference are provided as separate scripts.  
+Both scripts load settings from YAML files under `configs/`, enabling easy experiment control.
 
-### Train
+---
 
-```bash
-python train.py --config configs/train.yaml
-```
+### Training
 
-`train.py`는 다음 작업을 수행합니다:
+    python train.py --config configs/train.yaml
 
-1. `dataset.py`를 통해 `view_log.csv`와 `article_info.csv`를 로딩하고 사용자–기사 행렬을 생성합니다.
-2. `model.py`의 함수를 이용하여 협업 필터링 점수와 콘텐츠 기반 점수를 계산합니다.
-3. `trainer.py`를 호출하여 두 점수를 합성하고 추천 점수를 저장합니다.
-4. 필요에 따라 중간 결과를 `assets/` 디렉터리에 저장하여 추론 단계에서 재사용합니다.
+The training process performs the following steps:
+
+1. Load `view_log.csv` and `article_info.csv` using `dataset.py` and construct a user–article interaction matrix.
+2. Compute collaborative filtering scores and content-based similarity scores using functions in `model.py`.
+3. Combine the scores via `trainer.py` and store the final recommendation score matrix.
+4. Save intermediate artifacts to the `assets/` directory for reuse during inference.
+
+---
 
 ### Inference
 
-```bash
-python inference.py --config configs/submit.yaml
-```
+    python inference.py --config configs/submit.yaml
 
-`inference.py`는 학습 단계에서 저장한 추천 점수를 불러와 `sample_submission.csv` 포맷에 맞는 제출 파일을 생성합니다.  
-사용자가 작성한 기사나 반복 읽은 기사를 우선순위에 포함하는 로직 또한 `trainer.py`에 구현되어 있습니다.
+The inference script:
+
+- Loads precomputed recommendation scores from the training stage
+- Applies user-specific logic (e.g., prioritizing authored or frequently read articles)
+- Generates a submission file following the `sample_submission.csv` format
 
 ---
 
 ## 📜 Notes
 
-* `losses.py`에는 현재 사용되지 않는 커스텀 손실 함수를 구현할 수 있는 자리가 마련돼 있습니다. 협업 필터링 모델을 학습형 모델로 확장할 때 활용해 보세요.
-* `.gitignore`에는 `data/`, `assets/`, `.ipynb_checkpoints/` 등의 폴더와 대용량 파일이 포함되어 있어 Git 저장소 용량을 줄입니다.
-* `requirements.txt`는 예시로 `pandas`, `scikit-learn` 등의 주요 라이브러리를 버전과 함께 명시합니다. 실제 환경에 맞게 수정하세요.
+- `losses.py` is currently unused and serves as a placeholder for future extensions, such as learning-based collaborative filtering models.
+- `.gitignore` excludes directories such as `data/`, `assets/`, and `.ipynb_checkpoints/` to keep the repository lightweight.
+- `requirements.txt` lists core libraries such as `pandas` and `scikit-learn` with fixed versions. Adjust as needed for your environment.
 
-이 예제 프로젝트는 간단한 하이브리드 추천 시스템의 구조를 보여 주기 위한 것입니다. 실제 대회에 참가할 때는 더 정교한 모델링과 데이터 전처리가 필요할 수 있습니다.
+This sample project demonstrates the **basic structure of a hybrid recommendation system**.  
+For real competition use, more advanced modeling and feature engineering may be required.
